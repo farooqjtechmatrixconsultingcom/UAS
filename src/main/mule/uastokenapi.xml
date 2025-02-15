@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="ffb84058-5b4a-4216-93cf-40dc76eb41b7" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="fcae5df4-e33e-433a-80e4-515559540e42" >
+		<http:request-connection host="universityoftheartssingapore--uasdev.sandbox.my.salesforce.com" />
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="923041b5-937f-401c-9fd0-4c111eb37392" >
+		<http:request-connection host="universityoftheartssingapore--uasdev.sandbox.my.salesforce.com" />
+	</http:request-config>
+	<flow name="uascreatefacultyapiFlow" doc:id="dfe4cc70-70bb-4387-b995-b29102bfeb44" >
+		<http:listener doc:name="Listener" doc:id="0f03c373-8462-4cbb-a56c-b64431a68182" config-ref="HTTP_Listener_config" path="/token"/>
+		<http:request method="POST" doc:name="Access Token Request" doc:id="308c8319-de4e-4330-914d-20ca74e7543c" config-ref="HTTP_Request_configuration" path="/services/oauth2/token">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"client_secret" : "9E8E5FF284F93AA596BFD1CBF1BB173C10327AFD704F83265216F3494A91EC53",
+	"grant_type" : "client_credentials",
+	"client_id" : "3MVG9u3O1fwlU3ALHLkt9b4atx..B3S.vTQAXGAkib0Co9X0onAqpqGP8CryWsxGZ0nDEfXua9JL3T20xxgPy"
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="62685aeb-2b94-4c5e-99b3-de3d2fde8c9f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>	
+</mule>
