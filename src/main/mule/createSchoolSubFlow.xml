@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+		<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="203bd9dd-a854-43b6-b78e-e576372e76c9" >
+		<http:request-connection host="sf-token-api-jnnpjj.5sc6y6-1.usa-e2.cloudhub.io" />
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="1a75dac3-ed12-450d-990a-a569c3088180" >
+		<http:request-connection host="universityoftheartssingapore--uasdev.sandbox.my.salesforce.com" />
+	</http:request-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="aa80b538-e628-4ef9-8e22-b03f157cae34" >
+		<salesforce:basic-connection username="${Salesforce.Username}" password="${Salesforce.Password}" url="${Salesforce.AuthURL}" />
+	</salesforce:sfdc-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="8e060e90-b4f4-4298-9616-179cf1ff16cc" file="${env}.properties" />
+	<global-property doc:name="Global Property" doc:id="5a64eeae-c5da-4405-a921-ddbe6a128424" name="env" value="config" />
+	
+	<sub-flow name="createSchoolSub_Flow" doc:id="1d5d680d-d44f-4661-bb21-bf2666b4b41f">
+	<set-variable value="#[payload]" doc:name="Set Variable" doc:id="856fa759-3717-4031-9264-0ed65b15652b" variableName="schoolPayload" />
+		<salesforce:query doc:name="Get Faculty" doc:id="35378b65-fbd2-4843-9773-2e483879f06e" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[Select id, Faculty_Code__c from Faculty__c where Faculty_Code__c = ':FacultyCode']]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	FacultyCode : vars.schoolPayload.FacultyCode
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="abf35177-77b3-4422-bd96-7c7962d9a2e6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+  [{
+	"Name": vars.schoolPayload.Name,
+	"Department_Code__c": vars.schoolPayload.Department_Code__c,
+	"Faculty__c": payload.Id,
+	"Start_Date__c": vars.schoolPayload.Start_Date__c,
+	"End_Date__c": vars.schoolPayload.End_Date__c,
+	"Institute__c": vars.schoolPayload.Institute__c 
+  }]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create type="School__c" doc:name="Create School" doc:id="14f561de-04a8-404a-96ea-d36210bde5b7" config-ref="Salesforce_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="64778e5e-53d1-4aa4-9ec4-b783509eecf1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	
+</mule>
