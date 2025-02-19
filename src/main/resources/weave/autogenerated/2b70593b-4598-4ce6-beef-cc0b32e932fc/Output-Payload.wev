@@ -1,0 +1,17 @@
+%dw 2.0
+
+type auto_2b70593b_4598_4ce6_beef_cc0b32e932fc_Output_Payload = {
+  id?: Null, 
+  items: Array<{    exception?: Null,     payload: {      success?: Boolean,       id?: String,       errors: Array<String>, 
+      _?: Any
+    }, 
+    id?: String, 
+    message?: Null, 
+    statusCode?: Null, 
+    successful?: Boolean, 
+    _?: Any
+  }>, 
+  successful?: Boolean, 
+  _?: Any
+}
+

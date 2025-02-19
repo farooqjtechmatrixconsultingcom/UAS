@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="7316426a-31dc-477b-b210-5c6ed872f87e" >
+        <http:request-connection host="sf-token-api-jnnpjj.5sc6y6-1.usa-e2.cloudhub.io" />
+    </http:request-config>
+    <http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="04a9fbbe-a5ad-4a73-a78d-88307a51c845" >
+        <http:request-connection host="universityoftheartssingapore--uasdev.sandbox.my.salesforce.com" />
+    </http:request-config>
+    <salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="2b70593b-4598-4ce6-beef-cc0b32e932fc" >
+        <salesforce:basic-connection username="${Salesforce.Username}" password="${Salesforce.Password}" url="${Salesforce.AuthURL}" />
+    </salesforce:sfdc-config>
+    <global-property doc:name="Global Property" doc:id="60470e69-1447-443a-bcb1-a19a0af5e0e4" name="env" value="config" />
+    <configuration-properties doc:name="Configuration properties" doc:id="8cef983b-f59c-4549-896f-8232aa6b9563" file="${env}.properties" />
+	<sub-flow name="create_faculty_subflowSub_Flow" doc:id="2b70593b-4598-4ce6-beef-cc0b32e932fc" >
+	<ee:transform doc:name="Transform Message" doc:id="59597a26-e382-4695-bc7d-0a8f39edadef" >
+            <ee:message >
+                <ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[payload]]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <salesforce:create doc:name="Create" doc:id="54df828b-002e-4969-8172-5bd72b0f1fcd" config-ref="Salesforce_Config" type="Faculty__c"/>
+		<ee:transform doc:name="Transform Message" doc:id="c9cedb6d-ad01-43eb-a277-423a37454620" >
+            <ee:message >
+                <ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+	</sub-flow>
+</mule>
