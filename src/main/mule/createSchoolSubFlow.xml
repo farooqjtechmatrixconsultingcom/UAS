@@ -46,12 +46,16 @@ output application/java
 			</ee:message>
 		</ee:transform>
 		<salesforce:create type="School__c" doc:name="Create School" doc:id="14f561de-04a8-404a-96ea-d36210bde5b7" config-ref="Salesforce_Config"/>
-		<ee:transform doc:name="Transform Message" doc:id="64778e5e-53d1-4aa4-9ec4-b783509eecf1" >
+		<ee:transform doc:name="Transform Message" doc:id="88ba4150-5961-4da9-903e-2f66b608f550" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 ---
-payload]]></ee:set-payload>
+{
+    "success" : payload.items[0].payload.success,
+    "id": if (payload.items[0].payload.id != null) payload.items[0].payload.id else "",
+    "error": [payload.items[0].message]
+}]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 	</sub-flow>
