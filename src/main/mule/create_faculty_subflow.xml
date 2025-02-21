@@ -29,13 +29,43 @@ output application/java
             </ee:message>
         </ee:transform>
         <salesforce:create doc:name="Create" doc:id="54df828b-002e-4969-8172-5bd72b0f1fcd" config-ref="Salesforce_Config" type="Faculty__c"/>
-		<ee:transform doc:name="Transform Message" doc:id="c9cedb6d-ad01-43eb-a277-423a37454620" >
-            <ee:message >
-                <ee:set-payload ><![CDATA[%dw 2.0
+		<!-- [STUDIO:"Choice"]<choice doc:name="Choice" doc:id="d7b3b000-0df2-41bb-86a0-3d5607275410" >
+			<when expression="#[payload.items[0&#93;.payload.success == true&#93;">
+				<ee:transform doc:name="Transform Message" doc:id="c9cedb6d-ad01-43eb-a277-423a37454620">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
 output application/json
----
-payload]]></ee:set-payload>
+&#45;&#45;-
+payload.items[0&#93;.payload&#93;&#93;></ee:set-payload>
             </ee:message>
         </ee:transform>
-	</sub-flow>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="bf81cd4d-9cd1-4fa9-bd77-f8db8998f7ab" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+&#45;&#45;-
+{
+    "success":false,
+    "message": payload.items[0&#93;.message,
+}&#93;&#93;></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice> [STUDIO] -->
+		<ee:transform doc:name="Transform Message" doc:id="f12bcb9d-1477-4eee-8dfa-0b5189d428fc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "success" : payload.items[0].payload.success,
+    "id": if (payload.items[0].payload.id != null) payload.items[0].payload.id else "",
+    "error": [payload.items[0].message]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	
+</sub-flow>
 </mule>
