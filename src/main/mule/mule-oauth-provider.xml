@@ -10,19 +10,69 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="f6fe42de-d9f1-463c-a476-983dd82b263c" >
 		<http:listener-connection host="0.0.0.0" port="8081" />
 	</http:listener-config>
-	<os:object-store name="clinet_os" doc:name="Object store" doc:id="572830be-9318-4c65-bcde-658ec96ac284" />
-	<oauth2-provider:config name="OAuth2_Provider_Config" doc:name="OAuth2 Provider Config" doc:id="0f685763-344f-4c48-8da1-9251002a7f78" listenerConfig="HTTP_Listener_config" clientStore="clinet_os" supportedGrantTypes="CLIENT_CREDENTIALS" >
+	<os:object-store name="token_os" doc:name="Object store" doc:id="46a6b1a2-d74c-4306-8f77-1f9811dfd7f4" />
+	<os:object-store name="client_details_os" doc:name="Object store" doc:id="71af806a-55f8-4775-bc33-0fbd38ae7fff" entryTtl="24" entryTtlUnit="HOURS" expirationInterval="24" expirationIntervalUnit="HOURS"/>
+	<os:object-store name="os_client" doc:name="Object store" doc:id="07cafac7-4a4f-457b-8936-f263b62aa2d1" />
+	<oauth2-provider:config name="OAuth2_Provider_Config1" doc:name="OAuth2 Provider Config" doc:id="4a7df209-56d1-4d76-94f5-6a7aa7efd383" listenerConfig="HTTP_Listener_config" clientStore="os_client" supportedGrantTypes="CLIENT_CREDENTIALS">
 		<oauth2-provider:token-config tokenStore="token_os" />
 	</oauth2-provider:config>
-	<os:object-store name="token_os" doc:name="Object store" doc:id="46a6b1a2-d74c-4306-8f77-1f9811dfd7f4" />
-	<flow name="mule-oauth-providerFlow" doc:id="03b5b599-7c81-4d36-905c-f890b90db86f" >
-		<http:listener doc:name="Listener" doc:id="f6553e77-2909-4b8d-acf6-c6602cc8aac8" config-ref="HTTP_Listener_config" path="/createClient"/>
-		<oauth2-provider:create-client doc:name="Create client" doc:id="8c9073fb-7a76-4dcb-9cb3-32c3bbc32b4a" config-ref="OAuth2_Provider_Config" clientId="#[attributes.headers.client_Id]" secret="#[attributes.headers.client_secret]" clientName="#[attributes.headers.client_name]" authorizedGrantTypes='#[["CLIENT_CREDENTIALS"]]' type="CONFIDENTIAL" failIfPresent="true" description='#[""]' principal='#[""]' redirectUris='#[["abc.com"]]'/>
-		<set-payload value='#["Client Created."]' doc:name="Set Payload" doc:id="bd368ff7-76e8-4c0e-a768-66501aada383" />
+	<flow name="mule-oauth-providerFlow2" doc:id="fc8066c6-0a76-4afc-8625-91eaaa06ba00" >
+		<scheduler doc:name="Scheduler" doc:id="4af8d08a-6263-47e8-a91c-51a62bd130e3" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="2" timeUnit="HOURS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<os:retrieve doc:name="Retrieve" doc:id="d84c9fab-c47f-4fcc-91cf-c18453b4f248" key="clinet_details" objectStore="client_details_os" target="os_clinetDetails"/>
+		<logger level="TRACE" doc:name="Logger" doc:id="88ad8f4d-e818-4f27-9f25-0bc98488e0c8" message="#[vars.os_clinetDetails]"/>
+		<flow-ref doc:name="Flow Reference" doc:id="491e9c0e-ca6c-4abd-b137-15f36f807a86" name="mule-oauth-providerSub_Flow" targetValue="#[vars.os_clinetDetails]" />
+	</flow>
+	<sub-flow name="mule-oauth-providerSub_Flow" doc:id="312698b9-f8c4-437e-8df9-7b23f1259acc" >
+		<logger level="INFO" doc:name="Start Logger" doc:id="457e6b55-e296-4911-9b99-181149c7213b" message="#[vars.os_clinetDetails]"/>
+		<oauth2-provider:create-client doc:name="Create client" doc:id="8c9073fb-7a76-4dcb-9cb3-32c3bbc32b4a" config-ref="OAuth2_Provider_Config1" clientId="#[vars.os_clinetDetails.client_id]" secret="#[vars.os_clinetDetails.client_secret]" clientName="#[vars.os_clinetDetails.client_name]" authorizedGrantTypes='#[["CLIENT_CREDENTIALS"]]' type="CONFIDENTIAL" description='#[""]' principal='#[""]' redirectUris='#[["abc.com"]]' />
+		<set-payload value='#["Client Created Successfully."]' doc:name="Set Payload" doc:id="bd368ff7-76e8-4c0e-a768-66501aada383" />
+		<logger level="INFO" doc:name="Exit Logger" doc:id="a40e2bb0-c1de-4119-bf50-4653ed7b98a7" message="#[payload]"/>
+		<os:store doc:name="Store" doc:id="9334567d-6445-497b-9a6d-74f348261e77" key="clinet_details" objectStore="client_details_os">
+			<os:value><![CDATA[#[vars.os_clinetDetails]]]></os:value>
+		</os:store>
+	</sub-flow>
+	<flow name="mule-oauth-providerFlow" doc:id="153e64c9-c2fb-498c-b736-c188178ebb83" >
+		<http:listener doc:name="Listener" doc:id="c38b7aff-5279-444c-8f3d-074136491502" config-ref="HTTP_Listener_config" path="/createClient"/>
+		<logger level="INFO" doc:name="Create Client Start Logger" doc:id="1f146235-76f6-4742-b97c-c2669bf31ccd" message="#[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="90ceab4c-9777-42b2-839a-255aff80e56a">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="os_clinetDetails"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"client_id":attributes.headers.client_id,
+	"client_secret":attributes.headers.client_secret,
+	"client_name": "Adisseo_Client"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="0d7af518-b0e3-4502-95c4-888e8ed3897b" >
+			<when expression='#[attributes.headers.isFirstTime == "true"]'>
+				<logger level="INFO" doc:name="Logger" doc:id="b5e37064-9349-4c78-8bf9-32e2f3b1005b" message='#["Client is creating for first time."]'/>
+			</when>
+			<otherwise >
+				<os:retrieve doc:name="Retrieve" doc:id="24488d3f-2a95-4781-92bc-a0d9eac1cdf0" key="clinet_details" objectStore="client_details_os" target="delete_clientDetails">
+			<os:default-value><![CDATA[#[{
+	"client_id":"ec4d05b80c514d229cb78ffe1aabf67356",
+	"client_secret":"4153D881C32B4E17AA556A74b3e71a5efg"
+}]]]></os:default-value>
+		</os:retrieve>
+				<oauth2-provider:delete-client doc:name="Delete client" doc:id="dc2f1698-9316-4fb6-b0a5-155b32dc58b9" config-ref="OAuth2_Provider_Config1" clientId="#[vars.delete_clientDetails.client_id]" secret="#[vars.delete_clientDetails.client_secret]" />
+			</otherwise>
+		</choice>
+		<flow-ref doc:name="Flow Reference" doc:id="f70b7687-a835-47c0-8164-fa4b21d922d8" name="mule-oauth-providerSub_Flow" targetValue="#[vars.os_clinetDetails]"/>
+		<set-payload value='#["Client Created Successfully"]' doc:name="Set Response" doc:id="1482222a-0053-4b03-9ecb-180475a38c31" />
+		<logger level="INFO" doc:name="Create Client Start Logger" doc:id="f5286bdd-7218-43a8-b246-0847bf28da4c" message="#[payload]"/>
 	</flow>
 	<flow name="mule-oauth-providerFlow1" doc:id="bed1d08e-196c-41e5-81ed-7657d76f5730" >
 		<http:listener doc:name="Listener" doc:id="16151f1e-c217-4a55-a2c3-0913bfcd1ebe" config-ref="HTTP_Listener_config" path="/validate"/>
-		<oauth2-provider:validate-token doc:name="Validate token" doc:id="19e10e28-13f0-4328-a474-afefe6b6d898" config-ref="OAuth2_Provider_Config"/>
+		<oauth2-provider:validate-token doc:name="Validate token" doc:id="19e10e28-13f0-4328-a474-afefe6b6d898" config-ref="OAuth2_Provider_Config1"/>
 		<ee:transform doc:name="Transform Message" doc:id="660dc0d2-1bef-455a-81fc-985b23431aa0" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0

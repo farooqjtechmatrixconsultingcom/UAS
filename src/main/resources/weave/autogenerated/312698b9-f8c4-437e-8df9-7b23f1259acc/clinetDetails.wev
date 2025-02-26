@@ -1,0 +1,5 @@
+%dw 2.0
+
+type auto_312698b9_f8c4_437e_8df9_7b23f1259acc_Output_Variables_os_clinetDetails = {|  |} {"typeId": "java.io.Serializable",
+"typeAlias": "Serializable"}
+
